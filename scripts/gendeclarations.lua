@@ -69,26 +69,7 @@ local word = branch(
     right_word
   )
 )
-local spaces = any_amount(branch(
-  s,
-  -- Comments are really handled by preprocessor, so the following is not needed
-  concat(
-    lit('/*'),
-    any_amount(concat(
-      neg_look_ahead(lit('*/')),
-      any_character
-    )),
-    lit('*/')
-  ),
-  concat(
-    lit('//'),
-    any_amount(concat(
-      neg_look_ahead(lit('\n')),
-      any_character
-    )),
-    lit('\n')
-  )
-))
+local spaces = any_amount(s)
 local typ_part = concat(
   word,
   any_amount(concat(
@@ -191,21 +172,10 @@ while init ~= nil do
     break
   end
   init = init + 1
-  if text:sub(init, init) == '#' then
-    file = text:match(filepattern, init)
-    if file ~= nil then
-      curfile = file
-    end
-  elseif curfile == neededfile then
     s = init
     e = pattern:match(text, init)
     if e ~= nil then
       local declaration = text:sub(s, e - 1)
-      -- Comments are really handled by preprocessor, so the following is not 
-      -- needed
-      declaration = declaration:gsub('/%*.-%*/', '')
-      declaration = declaration:gsub('//.-\n', '\n')
-
       declaration = declaration:gsub('\n', ' ')
       declaration = declaration:gsub('%s+', ' ')
       declaration = declaration:gsub(' ?%( ?', '(')
@@ -217,11 +187,11 @@ while init ~= nil do
       declaration = declaration .. ';\n'
       if text:sub(s, s + 5) == 'static' then
         static = static .. declaration
-      else
+      elseif text:sub(s,s + 5) ~= 'inline' then
         non_static = non_static .. declaration
       end
+      init = e
     end
-  end
 end
 
 non_static = non_static .. footer
