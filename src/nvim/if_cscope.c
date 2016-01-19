@@ -1640,8 +1640,7 @@ static char *cs_pathcomponents(char *path)
 static void cs_print_tags_priv(char **matches, char **cntxts,
                                 size_t num_matches)
 {
-  char        *ptag;
-  char        *fname, *lno, *extra, *tbuf;
+  char        *fname, *lno, *extra;
   size_t      num;
   char        *globalcntx = "GLOBAL";
   char        *context;
@@ -1649,10 +1648,10 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
 
   assert (num_matches > 0);
 
-  tbuf = xmalloc(strlen(matches[0]) + 1);
-
-  strcpy(tbuf, matches[0]);
-  ptag = strtok(tbuf, "\t");
+  char *tbuf = xstrdup(matches[0]);
+  char *ptag = strtok(tbuf, "\t");
+  // A match always contains a '\t', see cs_make_vim_style_matches().
+  assert(ptag);
 
   size_t newsize = strlen(cstag_msg) + strlen(ptag);
   char *buf = xmalloc(newsize);
