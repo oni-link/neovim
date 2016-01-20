@@ -1653,6 +1653,8 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   // A match always contains a '\t', see cs_make_vim_style_matches().
   assert(ptag);
 
+  // "%s" won't appear in result string, so we don't need extra memory for
+  // terminating NUL.
   size_t newsize = strlen(cstag_msg) + strlen(ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
