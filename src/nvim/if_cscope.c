@@ -1640,10 +1640,7 @@ static char *cs_pathcomponents(char *path)
 static void cs_print_tags_priv(char **matches, char **cntxts,
                                 size_t num_matches)
 {
-  char        *fname, *lno, *extra;
-  size_t      num;
   char        *globalcntx = "GLOBAL";
-  char        *context;
   char        *cstag_msg = _("Cscope tag: %s");
 
   assert (num_matches > 0);
@@ -1658,7 +1655,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   size_t newsize = strlen(cstag_msg) + strlen(ptag);
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
-  (void)sprintf(buf, cstag_msg, ptag);
+  (void)snprintf(buf, bufsize, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
 
   xfree(tbuf);
@@ -1667,43 +1664,37 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   msg_advance(msg_col + 2);
   MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
 
-  num = 1;
   for (size_t i = 0; i < num_matches; i++) {
-    size_t idx = i;
 
-    /* if we really wanted to, we could avoid this malloc and strcpy
-     * by parsing matches[i] on the fly and placing stuff into buf
-     * directly, but that's too much of a hassle
-     */
-    tbuf = xmalloc(strlen(matches[idx]) + 1);
-    (void)strcpy(tbuf, matches[idx]);
+    // If we really wanted to, we could avoid this xstrdup by parsing
+    // matches[i] on the fly and placing stuff into buf directly, but that's
+    // too much of a hassle.
+    tbuf = xstrdup(matches[i]);
 
+    char *fname, *lno;
     if (!(strtok(tbuf, "\t") && (fname = strtok(NULL, "\t"))
           && (lno = strtok(NULL, "\t")))) {
       xfree(tbuf);
       continue;
     }
 
-    extra = strtok(NULL, "\t");
+    char *extra = strtok(NULL, "\t");
 
-    lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
+    lno[strlen(lno) - 2] = '\0';  // ignore ;" at the end
 
     const char *csfmt_str = "%4zu %6s  ";
-    /* hopefully 'num' (num of matches) will be less than 10^16 */
+    // Hopefully num_matches will be less than 10^16.
     newsize = strlen(csfmt_str) + 16 + strlen(lno);
     if (bufsize < newsize) {
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, csfmt_str, num, lno);
+    (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
     MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
     MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
 
-    /* compute the required space for the context */
-    if (cntxts[idx] != NULL)
-      context = cntxts[idx];
-    else
-      context = globalcntx;
+    // compute the required space for the context
+    char *context = cntxts[i] ? cntxts[i] : globalcntx;
 
     const char *cntxformat = " <<%s>>";
     // '%s' won't appear in result string, so:
@@ -1714,7 +1705,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
-    (void)sprintf(buf, cntxformat, context);
+    (void)snprintf(buf, bufsize, cntxformat, context);
 
     /* print the context only if it fits on the same line */
     if (msg_col + (int)strlen(buf) >= (int)Columns)
@@ -1738,7 +1729,6 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       break;
     }
 
-    num++;
   }   /* for all matches */
 
   xfree(buf);
