@@ -1657,6 +1657,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   size_t bufsize = newsize;  // Track available bufsize
   (void)snprintf(buf, bufsize, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
+  msg_clr_eos();
 
   xfree(tbuf);
 
